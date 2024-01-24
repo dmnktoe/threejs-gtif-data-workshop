@@ -38,10 +38,11 @@ Connect the dots in Sector D, where we'll transcend local environments into the 
     
     Sector D: *connect*
     - We're going to shift the local environment (incl. music) into web w/ three.js
-    - Make sure you've installed nodejs[5] on your device
+    - Make sure you've installed NodeJS on your device
     - Refer to https://github.com/dmnktoe/threejs-gltf-tiktok-workshop 
         - Download the repo
-        - Follow the instructions on 'run locally'
+        - Follow the instructions on 'Run locally'
+
 ## Run Locally
 
 We're going to set up a local webserver during development:
@@ -61,6 +62,11 @@ We're going to set up a local webserver during development:
     ```bash
     npm run dev
     ```
+  
+## Modify & using your assets
+
+...
+
 ## Lessons Learned
 
 What did you learn while building this project? What challenges did you face and how did you overcome them?
