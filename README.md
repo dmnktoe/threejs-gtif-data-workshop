@@ -62,6 +62,11 @@ We're going to set up a local webserver during development:
     ```bash
     npm run dev
     ```
+
+- After you've finished your development you can build your project by running
+    ```bash
+    npm run build
+    ```
   
 ## Modify & using your assets
 
