@@ -5,7 +5,9 @@
 
 # Web3D Fusion: TikTok Choreo with Three.js Workshop
 
-Join the 'threejs-gltf-tiktok-workshop' for a thrilling exploration of creative realms! In Sector A, unleash your artistic prowess as you craft your own captivating 3D model using any available 3D program. Dive deeper by rigging your character with Mixamo for added dynamism.
+Join the 'threejs-gltf-tiktok-workshop' for a thrilling exploration of creative realms!
+
+In Sector A, unleash your artistic prowess as you craft your own captivating 3D model using any available 3D program. Dive deeper by rigging your character with Mixamo for added dynamism.
 
 Sector B invites you to master the art of choreography. Select a captivating TikTok dance from the vast library at https://tiktok.com/ and download the video to your hard drive using https://ssstik.io/de. Elevate your creation by animating your character with the user-friendly tool at https://plask.ai/ and marvel at the results.
 
