@@ -4,7 +4,9 @@ import {
   AxesHelper,
   BoxGeometry,
   Clock,
+  DirectionalLight,
   GridHelper,
+  HemisphereLight,
   LoadingManager,
   Mesh,
   MeshLambertMaterial,
@@ -18,6 +20,7 @@ import {
   WebGLRenderer,
 } from 'three'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import * as animations from './helpers/animations'
@@ -32,7 +35,9 @@ let renderer: WebGLRenderer
 let scene: Scene
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
+let hemisphereLight: HemisphereLight
 let pointLight: PointLight
+let directionalLight: DirectionalLight
 let cube: Mesh
 let camera: PerspectiveCamera
 let cameraControls: OrbitControls
@@ -81,6 +86,17 @@ function init() {
   // ===== 💡 LIGHTS =====
   {
     ambientLight = new AmbientLight('white', 0.4)
+    directionalLight = new DirectionalLight(0xffffff, 3)
+    directionalLight.position.set( - 3, 10, - 10 );
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.top = 2;
+    directionalLight.shadow.camera.bottom = - 2;
+    directionalLight.shadow.camera.left = - 2;
+    directionalLight.shadow.camera.right = 2;
+    directionalLight.shadow.camera.near = 0.1;
+    directionalLight.shadow.camera.far = 40;
+    hemisphereLight = new HemisphereLight(0xffffff, 0x8d8d8d, 3)
+    hemisphereLight.position.set( 0, 20, 0 )
     pointLight = new PointLight('#ffdca8', 1.2, 100)
     pointLight.position.set(-2, 3, 3)
     pointLight.castShadow = true
@@ -90,6 +106,8 @@ function init() {
     pointLight.shadow.mapSize.width = 2048
     pointLight.shadow.mapSize.height = 2048
     scene.add(ambientLight)
+    scene.add(directionalLight)
+    scene.add(hemisphereLight)
     scene.add(pointLight)
   }
 
@@ -121,6 +139,26 @@ function init() {
 
     scene.add(cube)
     scene.add(plane)
+  }
+
+  // ===== 🎳 LOAD GLTF MODEL =====
+
+  {
+    const loader = new GLTFLoader(loadingManager)
+    loader.load(
+      'models/Soldier.glb',
+      (gltf) => {
+        const model = gltf.scene
+        scene.add(model)
+      },
+      (xhr) => {
+        console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`)
+      },
+      (error) => {
+        console.log('❌ error while loading gltf model')
+        console.error(error)
+      }
+    )
   }
 
   // ===== 🎥 CAMERA =====
