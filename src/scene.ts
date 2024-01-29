@@ -4,18 +4,16 @@ import {
   AnimationAction,
   AnimationMixer,
   AxesHelper,
-  BoxGeometry,
   Clock,
   Color,
   DirectionalLight,
   Fog,
   GridHelper,
+  Group,
   HemisphereLight,
   LoadingManager,
   Mesh,
-  MeshLambertMaterial,
   MeshPhongMaterial,
-  MeshStandardMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
@@ -28,7 +26,6 @@ import {
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import * as animations from './helpers/animations'
 import {toggleFullScreen} from './helpers/fullscreen'
 import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style.css'
@@ -37,23 +34,22 @@ const CANVAS_ID = 'scene'
 
 let canvas: HTMLElement
 let renderer: WebGLRenderer
-let scene: Scene
-let model: Mesh
+let model: Group
 let skeleton: SkeletonHelper
+let mixer: AnimationMixer
+let clock: Clock;
+let scene: Scene
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 let hemisphereLight: HemisphereLight
 let pointLight: PointLight
 let directionalLight: DirectionalLight
-let cube: Mesh
 let camera: PerspectiveCamera
 let cameraControls: OrbitControls
 let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
-let clock: Clock
 let stats: Stats
 let gui: GUI
-let mixer: AnimationMixer
 
 const crossFadeControls: Controller[] = [];
 
@@ -65,13 +61,10 @@ let settings: any;
 let singleStepMode = false;
 let sizeOfNextStep = 0;
 
-const animation = { enabled: false, play: true }
-
 const music = new Audio('sounds/fingers-up.mp3');
 music.loop = true;
 
 init()
-animate()
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
@@ -136,38 +129,12 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    const sideLength = 1
-    const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-    const cubeMaterial = new MeshStandardMaterial({
-      color: '#f69f1f',
-      metalness: 0.5,
-      roughness: 0.7,
-    })
-    cube = new Mesh(cubeGeometry, cubeMaterial)
-    cube.castShadow = true
-    cube.position.y = 0.5
-
-    const planeGeometry = new PlaneGeometry(3, 3)
-    const planeMaterial = new MeshLambertMaterial({
-      color: 'gray',
-      emissive: 'teal',
-      emissiveIntensity: 0.2,
-      side: 2,
-      transparent: true,
-      opacity: 0.4,
-    })
-    const plane = new Mesh(planeGeometry, planeMaterial)
-    plane.rotateX(Math.PI / 2)
-    plane.receiveShadow = true
-
     const mesh = new Mesh(new PlaneGeometry(100, 100),
       new MeshPhongMaterial({ color: 0xcbcbcb, depthWrite: false }));
     mesh.rotation.x = - Math.PI / 2;
     mesh.receiveShadow = true;
 
     scene.add(mesh);
-    scene.add(cube)
-    scene.add(plane)
   }
 
   // ===== 🎳 LOAD GLTF MODEL =====
@@ -177,10 +144,10 @@ function init() {
     loader.load(
       'models/Soldier.glb',
       (gltf) => {
-        const model = gltf.scene
+        model = gltf.scene
         scene.add(model)
 
-        model.traverse((child) => {
+        model.traverse((child: { castShadow: boolean; receiveShadow: boolean; }) => {
           if (child instanceof Mesh) {
             child.castShadow = true
             child.receiveShadow = true
@@ -216,14 +183,13 @@ function init() {
   // ===== 🎥 CAMERA =====
   {
     camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 100);
-    camera.position.set( 1, 2, - 3 );
+    camera.position.set( 2, 3, - 5 );
     camera.lookAt( 0, 1, 0 );
   }
 
   // ===== 🕹️ CONTROLS =====
   {
     cameraControls = new OrbitControls(camera, canvas)
-    cameraControls.target = cube.position.clone()
     cameraControls.enableDamping = true
     cameraControls.autoRotate = false
     cameraControls.update()
@@ -341,23 +307,6 @@ function init() {
     speedFolder.open();
     musicFolder.open();
 
-    const cubeOneFolder = gui.addFolder('Cube one')
-
-    cubeOneFolder.add(cube.position, 'x').min(-5).max(5).step(0.5).name('pos x')
-    cubeOneFolder.add(cube.position, 'y').min(-5).max(5).step(0.5).name('pos y')
-    cubeOneFolder.add(cube.position, 'z').min(-5).max(5).step(0.5).name('pos z')
-
-    cubeOneFolder.add(cube.material, 'wireframe')
-    cubeOneFolder.addColor(cube.material, 'color')
-    cubeOneFolder.add(cube.material, 'metalness', 0, 1, 0.1)
-    cubeOneFolder.add(cube.material, 'roughness', 0, 1, 0.1)
-
-    cubeOneFolder.add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate x')
-    cubeOneFolder.add(cube.rotation, 'y', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate y')
-    cubeOneFolder.add(cube.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate z')
-
-    cubeOneFolder.add(animation, 'enabled').name('animated')
-
     const lightsFolder = gui.addFolder('Lights')
     lightsFolder.add(pointLight, 'visible').name('point light')
     lightsFolder.add(ambientLight, 'visible').name('ambient light')
@@ -388,119 +337,119 @@ function init() {
 
     gui.close()
   }
+}
 
-  function showModel(visibility: boolean) {
-    model.visible = visibility;
-  }
+function showModel(visibility: boolean) {
+  model.visible = visibility;
+}
 
-  function showSkeleton(visibility: boolean) {
-    skeleton.visible = visibility;
-  }
+function showSkeleton(visibility: boolean) {
+  skeleton.visible = visibility;
+}
 
-  function modifyTimeScale(speed: number) {
-    mixer.timeScale = speed;
-  }
+function modifyTimeScale(speed: number) {
+  mixer.timeScale = speed;
+}
 
-  function deactivateAllActions() {
-    actions.forEach(function (action) {
-      action.stop();
-    });
-  }
+function deactivateAllActions() {
+  actions.forEach(function (action) {
+    action.stop();
+  });
+}
 
-  function activateAllActions() {
-    setWeight(idleAction, settings['modify idle weight']);
-    setWeight(walkAction, settings['modify walk weight']);
-    setWeight(runAction, settings['modify run weight']);
-    actions.forEach(function (action) {
-      action.play();
-    });
-  }
+function activateAllActions() {
+  setWeight(idleAction, settings['modify idle weight']);
+  setWeight(walkAction, settings['modify walk weight']);
+  setWeight(runAction, settings['modify run weight']);
+  actions.forEach(function (action) {
+    action.play();
+  });
+}
 
-  function pauseContinue() {
-    if (singleStepMode) {
-      singleStepMode = false;
-      unPauseAllActions();
-    } else {
-      if (idleAction.paused) {
-        unPauseAllActions();
-      } else {
-        pauseAllActions();
-      }
-    }
-  }
-
-  function pauseAllActions() {
-    actions.forEach(function (action) {
-      action.paused = true;
-    });
-  }
-
-  function unPauseAllActions() {
-    actions.forEach(function (action) {
-      action.paused = false;
-    });
-  }
-
-  function toSingleStepMode() {
-    unPauseAllActions();
-    singleStepMode = true;
-    sizeOfNextStep = settings['modify step size'];
-  }
-
-  function prepareCrossFade(startAction: any, endAction: any, defaultDuration: any) {
-    const duration = setCrossFadeDuration(defaultDuration);
-
+function pauseContinue() {
+  if (singleStepMode) {
     singleStepMode = false;
     unPauseAllActions();
+  } else {
+    if (idleAction.paused) {
+      unPauseAllActions();
+    } else {
+      pauseAllActions();
+    }
+  }
+}
 
-    if (startAction === idleAction) {
+function pauseAllActions() {
+  actions.forEach(function (action) {
+    action.paused = true;
+  });
+}
+
+function unPauseAllActions() {
+  actions.forEach(function (action) {
+    action.paused = false;
+  });
+}
+
+function toSingleStepMode() {
+  unPauseAllActions();
+  singleStepMode = true;
+  sizeOfNextStep = settings['modify step size'];
+}
+
+function prepareCrossFade(startAction: any, endAction: any, defaultDuration: any) {
+  const duration = setCrossFadeDuration(defaultDuration);
+
+  singleStepMode = false;
+  unPauseAllActions();
+
+  if (startAction === idleAction) {
+    executeCrossFade(startAction, endAction, duration);
+  } else {
+    synchronizeCrossFade(startAction, endAction, duration);
+  }
+}
+
+function setCrossFadeDuration(defaultDuration: any) {
+  if (settings['use default duration']) {
+    return defaultDuration;
+  } else {
+    return settings['set custom duration'];
+  }
+}
+
+function synchronizeCrossFade(startAction: any, endAction: any, duration: any) {
+  mixer.addEventListener('loop', onLoopFinished);
+  function onLoopFinished(event: any) {
+    if (event.action === startAction) {
+      mixer.removeEventListener('loop', onLoopFinished);
       executeCrossFade(startAction, endAction, duration);
-    } else {
-      synchronizeCrossFade(startAction, endAction, duration);
     }
   }
+}
 
-  function setCrossFadeDuration(defaultDuration: any) {
-    if (settings['use default duration']) {
-      return defaultDuration;
-    } else {
-      return settings['set custom duration'];
-    }
-  }
+function executeCrossFade(startAction: any, endAction: any, duration: any) {
+  setWeight(endAction, 1);
+  endAction.time = 0;
+  startAction.crossFadeTo(endAction, duration, true);
+}
 
-  function synchronizeCrossFade(startAction: any, endAction: any, duration: any) {
-    mixer.addEventListener('loop', onLoopFinished);
-    function onLoopFinished(event: any) {
-      if (event.action === startAction) {
-        mixer.removeEventListener('loop', onLoopFinished);
-        executeCrossFade(startAction, endAction, duration);
-      }
-    }
-  }
+function setWeight(action: any, weight: any) {
+  action.enabled = true;
+  action.setEffectiveTimeScale(1);
+  action.setEffectiveWeight(weight);
+}
 
-  function executeCrossFade(startAction: any, endAction: any, duration: any) {
-    setWeight(endAction, 1);
-    endAction.time = 0;
-    startAction.crossFadeTo(endAction, duration, true);
+function playMusic(play: boolean) {
+  if (play) {
+    music.play();
+  } else {
+    music.pause();
   }
+}
 
-  function setWeight(action: any, weight: any) {
-    action.enabled = true;
-    action.setEffectiveTimeScale(1);
-    action.setEffectiveWeight(weight);
-  }
-
-  function playMusic(play: boolean) {
-    if (play) {
-      music.play();
-    } else {
-      music.pause();
-    }
-  }
-
-  function modifyVolume(volume: number) {
-    music.volume = volume;
-  }
+function modifyVolume(volume: number) {
+  music.volume = volume;
 }
 
 function updateWeightSliders() {
@@ -553,11 +502,6 @@ function animate() {
   mixer.update(mixerUpdateDelta);
 
   stats.update()
-
-  if (animation.enabled && animation.play) {
-    animations.rotate(cube, clock, Math.PI / 3)
-    animations.bounce(cube, clock, 1, 0.5, 0.5)
-  }
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement
