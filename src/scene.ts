@@ -387,18 +387,13 @@ function init() {
     gui.add({ resetGui }, 'resetGui').name('RESET')
 
     gui.close()
-
-    function showModel(visibility: boolean) {
-      console.log('show model', visibility)
-      console.log('model', model)
-      model.visible = visibility;
-    }
   }
 
+  function showModel(visibility: boolean) {
+    model.visible = visibility;
+  }
 
   function showSkeleton(visibility: boolean) {
-    console.log('show skeleton', visibility)
-    console.log('skeleton', skeleton)
     skeleton.visible = visibility;
   }
 
