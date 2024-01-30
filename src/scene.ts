@@ -142,7 +142,7 @@ function init() {
   {
     const loader = new GLTFLoader(loadingManager)
     loader.load(
-      'models/Soldier.glb',
+      'models/blob.glb',
       (gltf) => {
         model = gltf.scene
         scene.add(model)
@@ -162,14 +162,12 @@ function init() {
         console.log(animations);
         mixer = new AnimationMixer(model);
 
-        idleAction = mixer.clipAction(animations[0]);
-        walkAction = mixer.clipAction(animations[3]);
-        runAction = mixer.clipAction(animations[1]);
+        walkAction = mixer.clipAction(animations[0]);
+        
 
-        actions = [idleAction, walkAction, runAction];
+     
 
-        activateAllActions();
-        animate();
+       
       },
       (xhr) => {
         console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`)
@@ -179,7 +177,28 @@ function init() {
         console.error(error)
       }
     )
+    const loader2 = new GLTFLoader(loadingManager)
+    loader2.load(
+      'models/Soldier.glb',
+      (gltf) => {
+       
+
+        const animations2 = gltf.animations;
+      
+
+        idleAction = mixer.clipAction(animations2[0]);
+        runAction = mixer.clipAction(animations2[1]);
+
+        actions = [idleAction, walkAction, runAction];
+
+        activateAllActions();
+        animate();
+      },
+      
+    )
   }
+
+  
 
   // ===== 🎥 CAMERA =====
   {
@@ -275,7 +294,7 @@ function init() {
 
     pausingFolder.add(settings, 'pause/continue');
     pausingFolder.add(settings, 'make single step');
-    pausingFolder.add(settings, 'modify step size', 0.01, 0.1, 0.001);
+    pausingFolder.add(settings, 'modify step size', 0.01, 1, 0.01);
 
     crossFadeControls.push(crossfadingFolder.add(settings, 'from walk to idle'));
     crossFadeControls.push(crossfadingFolder.add(settings, 'from idle to walk'));
@@ -295,7 +314,7 @@ function init() {
       setWeight(runAction, weight);
     });
 
-    speedFolder.add(settings, 'modify time scale', 0.0, 1.5, 0.01).onChange(modifyTimeScale);
+    speedFolder.add(settings, 'modify time scale', 0.1, 2, 0.01).onChange(modifyTimeScale);
 
     musicFolder.add(settings, 'play music').onChange(playMusic);
     musicFolder.add(settings, 'modify music volume', 0.0, 1.0, 0.01).onChange(modifyVolume);
@@ -404,7 +423,7 @@ function prepareCrossFade(startAction: any, endAction: any, defaultDuration: any
   singleStepMode = false;
   unPauseAllActions();
 
-  if (startAction === idleAction) {
+  if (startAction === walkAction) {
     executeCrossFade(startAction, endAction, duration);
   } else {
     synchronizeCrossFade(startAction, endAction, duration);
