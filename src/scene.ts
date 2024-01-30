@@ -159,6 +159,7 @@ function init() {
         scene.add(skeleton);
 
         const animations = gltf.animations;
+        console.log(animations);
         mixer = new AnimationMixer(model);
 
         idleAction = mixer.clipAction(animations[0]);
@@ -470,14 +471,14 @@ function updateCrossFadeControls() {
     crossFadeControls[0].enable();
     crossFadeControls[1].disable();
     crossFadeControls[2].enable();
-    crossFadeControls[3].enable();
+    crossFadeControls[3].disable();
   }
 
   if (idleWeight === 0 && walkWeight === 0 && runWeight === 1) {
     crossFadeControls[0].disable();
-    crossFadeControls[1].enable();
+    crossFadeControls[1].disable();
     crossFadeControls[2].disable();
-    crossFadeControls[3].disable();
+    crossFadeControls[3].enable();
   }
 }
 
