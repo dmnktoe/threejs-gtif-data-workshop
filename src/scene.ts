@@ -1,52 +1,70 @@
-import GUI from 'lil-gui'
+import GUI, { Controller } from 'lil-gui'
 import {
   AmbientLight,
+  AnimationAction,
+  AnimationMixer,
   AxesHelper,
-  BoxGeometry,
   Clock,
+  Color,
+  DirectionalLight,
+  Fog,
   GridHelper,
+  Group,
+  HemisphereLight,
   LoadingManager,
   Mesh,
-  MeshLambertMaterial,
-  MeshStandardMaterial,
+  MeshPhongMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
   PointLight,
   PointLightHelper,
   Scene,
+  SkeletonHelper,
   WebGLRenderer,
 } from 'three'
-import { DragControls } from 'three/examples/jsm/controls/DragControls'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import * as animations from './helpers/animations'
-import { toggleFullScreen } from './helpers/fullscreen'
-import { resizeRendererToDisplaySize } from './helpers/responsiveness'
+import {toggleFullScreen} from './helpers/fullscreen'
+import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style.css'
 
 const CANVAS_ID = 'scene'
 
 let canvas: HTMLElement
 let renderer: WebGLRenderer
+let model: Group
+let skeleton: SkeletonHelper
+let mixer: AnimationMixer
+let clock: Clock;
 let scene: Scene
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
+let hemisphereLight: HemisphereLight
 let pointLight: PointLight
-let cube: Mesh
+let directionalLight: DirectionalLight
 let camera: PerspectiveCamera
 let cameraControls: OrbitControls
-let dragControls: DragControls
 let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
-let clock: Clock
 let stats: Stats
 let gui: GUI
 
-const animation = { enabled: false, play: true }
+const crossFadeControls: Controller[] = [];
+
+let idleAction: AnimationAction, walkAction: AnimationAction, runAction: AnimationAction;
+let idleWeight: number, walkWeight: number, runWeight: number;
+let actions: AnimationAction[];
+let settings: any;
+
+let singleStepMode = false;
+let sizeOfNextStep = 0;
+
+const music = new Audio('sounds/fingers-up.mp3');
+music.loop = true;
 
 init()
-animate()
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
@@ -57,6 +75,9 @@ function init() {
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = PCFSoftShadowMap
     scene = new Scene()
+
+    scene.background = new Color(0xa0a0a0)
+    scene.fog = new Fog(0xa0a0a0, 10, 50);
   }
 
   // ===== 👨🏻‍💼 LOADING MANAGER =====
@@ -81,6 +102,17 @@ function init() {
   // ===== 💡 LIGHTS =====
   {
     ambientLight = new AmbientLight('white', 0.4)
+    directionalLight = new DirectionalLight(0xffffff, 3)
+    directionalLight.position.set( - 3, 10, - 10 );
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.top = 2;
+    directionalLight.shadow.camera.bottom = - 2;
+    directionalLight.shadow.camera.left = - 2;
+    directionalLight.shadow.camera.right = 2;
+    directionalLight.shadow.camera.near = 0.1;
+    directionalLight.shadow.camera.far = 40;
+    hemisphereLight = new HemisphereLight(0xffffff, 0x8d8d8d, 3)
+    hemisphereLight.position.set( 0, 20, 0 )
     pointLight = new PointLight('#ffdca8', 1.2, 100)
     pointLight.position.set(-2, 3, 3)
     pointLight.castShadow = true
@@ -90,75 +122,78 @@ function init() {
     pointLight.shadow.mapSize.width = 2048
     pointLight.shadow.mapSize.height = 2048
     scene.add(ambientLight)
+    scene.add(directionalLight)
+    scene.add(hemisphereLight)
     scene.add(pointLight)
   }
 
   // ===== 📦 OBJECTS =====
   {
-    const sideLength = 1
-    const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-    const cubeMaterial = new MeshStandardMaterial({
-      color: '#f69f1f',
-      metalness: 0.5,
-      roughness: 0.7,
-    })
-    cube = new Mesh(cubeGeometry, cubeMaterial)
-    cube.castShadow = true
-    cube.position.y = 0.5
+    const mesh = new Mesh(new PlaneGeometry(100, 100),
+      new MeshPhongMaterial({ color: 0xcbcbcb, depthWrite: false }));
+    mesh.rotation.x = - Math.PI / 2;
+    mesh.receiveShadow = true;
 
-    const planeGeometry = new PlaneGeometry(3, 3)
-    const planeMaterial = new MeshLambertMaterial({
-      color: 'gray',
-      emissive: 'teal',
-      emissiveIntensity: 0.2,
-      side: 2,
-      transparent: true,
-      opacity: 0.4,
-    })
-    const plane = new Mesh(planeGeometry, planeMaterial)
-    plane.rotateX(Math.PI / 2)
-    plane.receiveShadow = true
+    scene.add(mesh);
+  }
 
-    scene.add(cube)
-    scene.add(plane)
+  // ===== 🎳 LOAD GLTF MODEL =====
+
+  {
+    const loader = new GLTFLoader(loadingManager)
+    loader.load(
+      'models/Soldier.glb',
+      (gltf) => {
+        model = gltf.scene
+        scene.add(model)
+
+        model.traverse((child: { castShadow: boolean; receiveShadow: boolean; }) => {
+          if (child instanceof Mesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+          }
+        })
+
+        skeleton = new SkeletonHelper(model);
+        skeleton.visible = false;
+        scene.add(skeleton);
+
+        const animations = gltf.animations;
+        console.log(animations);
+        mixer = new AnimationMixer(model);
+
+        idleAction = mixer.clipAction(animations[0]);
+        walkAction = mixer.clipAction(animations[3]);
+        runAction = mixer.clipAction(animations[1]);
+
+        actions = [idleAction, walkAction, runAction];
+
+        activateAllActions();
+        animate();
+      },
+      (xhr) => {
+        console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`)
+      },
+      (error) => {
+        console.log('❌ error while loading gltf model')
+        console.error(error)
+      }
+    )
   }
 
   // ===== 🎥 CAMERA =====
   {
-    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
-    camera.position.set(2, 2, 5)
+    camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 100);
+    camera.position.set( 2, 3, - 5 );
+    camera.lookAt( 0, 1, 0 );
   }
 
   // ===== 🕹️ CONTROLS =====
   {
     cameraControls = new OrbitControls(camera, canvas)
-    cameraControls.target = cube.position.clone()
     cameraControls.enableDamping = true
     cameraControls.autoRotate = false
     cameraControls.update()
-
-    dragControls = new DragControls([cube], camera, renderer.domElement)
-    dragControls.addEventListener('hoveron', (event) => {
-      event.object.material.emissive.set('orange')
-    })
-    dragControls.addEventListener('hoveroff', (event) => {
-      event.object.material.emissive.set('black')
-    })
-    dragControls.addEventListener('dragstart', (event) => {
-      cameraControls.enabled = false
-      animation.play = false
-      event.object.material.emissive.set('black')
-      event.object.material.opacity = 0.7
-      event.object.material.needsUpdate = true
-    })
-    dragControls.addEventListener('dragend', (event) => {
-      cameraControls.enabled = true
-      animation.play = true
-      event.object.material.emissive.set('black')
-      event.object.material.opacity = 1
-      event.object.material.needsUpdate = true
-    })
-    dragControls.enabled = false
 
     // Full screen
     window.addEventListener('dblclick', (event) => {
@@ -192,27 +227,86 @@ function init() {
 
   // ==== 🐞 DEBUG GUI ====
   {
-    gui = new GUI({ title: '🐞 Debug GUI', width: 300 })
+    gui = new GUI({ title: '💃 Dance-Options', width: 300 })
 
-    const cubeOneFolder = gui.addFolder('Cube one')
+    const visibilityFolder = gui.addFolder('Visibility');
+    const activationFolder = gui.addFolder( 'Activation/Deactivation' );
+    const pausingFolder = gui.addFolder( 'Pausing/Stepping' );
+    const crossfadingFolder = gui.addFolder( 'Crossfading' );
+    const blendWeightsFolder = gui.addFolder( 'Blend Weights' );
+    const speedFolder = gui.addFolder( 'General Speed' );
+    const musicFolder = gui.addFolder( 'Music' );
 
-    cubeOneFolder.add(cube.position, 'x').min(-5).max(5).step(0.5).name('pos x')
-    cubeOneFolder.add(cube.position, 'y').min(-5).max(5).step(0.5).name('pos y')
-    cubeOneFolder.add(cube.position, 'z').min(-5).max(5).step(0.5).name('pos z')
+    settings = {
+      'show model': true,
+      'show skeleton': false,
+      'deactivate all': deactivateAllActions,
+      'activate all': activateAllActions,
+      'pause/continue': pauseContinue,
+      'make single step': toSingleStepMode,
+      'modify step size': 0.05,
+      'from walk to idle': function () {
+        prepareCrossFade(walkAction, idleAction, 1.0);
+      },
+      'from idle to walk': function () {
+        prepareCrossFade(idleAction, walkAction, 0.5);
+      },
+      'from walk to run': function () {
+        prepareCrossFade(walkAction, runAction, 2.5);
+      },
+      'from run to walk': function () {
+        prepareCrossFade( runAction, walkAction, 5.0 );
+      },
+      'use default duration': true,
+      'set custom duration': 3.5,
+      'modify idle weight': 0.0,
+      'modify walk weight': 1.0,
+      'modify run weight': 0.0,
+      'modify time scale': 1.0,
+      'play music': false,
+      'modify music volume': 0.5
+    };
 
-    cubeOneFolder.add(cube.material, 'wireframe')
-    cubeOneFolder.addColor(cube.material, 'color')
-    cubeOneFolder.add(cube.material, 'metalness', 0, 1, 0.1)
-    cubeOneFolder.add(cube.material, 'roughness', 0, 1, 0.1)
+    visibilityFolder.add(settings, 'show model').onChange(showModel);
+    visibilityFolder.add(settings, 'show skeleton').onChange(showSkeleton);
 
-    cubeOneFolder.add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate x')
-    cubeOneFolder.add(cube.rotation, 'y', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate y')
-    cubeOneFolder.add(cube.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate z')
+    activationFolder.add(settings, 'deactivate all');
+    activationFolder.add(settings, 'activate all');
 
-    cubeOneFolder.add(animation, 'enabled').name('animated')
+    pausingFolder.add(settings, 'pause/continue');
+    pausingFolder.add(settings, 'make single step');
+    pausingFolder.add(settings, 'modify step size', 0.01, 0.1, 0.001);
 
-    const controlsFolder = gui.addFolder('Controls')
-    controlsFolder.add(dragControls, 'enabled').name('drag controls')
+    crossFadeControls.push(crossfadingFolder.add(settings, 'from walk to idle'));
+    crossFadeControls.push(crossfadingFolder.add(settings, 'from idle to walk'));
+    crossFadeControls.push(crossfadingFolder.add(settings, 'from walk to run'));
+    crossFadeControls.push(crossfadingFolder.add(settings, 'from run to walk'));
+
+    crossfadingFolder.add(settings, 'use default duration');
+    crossfadingFolder.add(settings, 'set custom duration', 0, 10, 0.01);
+
+    blendWeightsFolder.add(settings, 'modify idle weight', 0.0, 1.0, 0.01).listen().onChange(function (weight: any) {
+      setWeight(idleAction, weight);
+    });
+    blendWeightsFolder.add(settings, 'modify walk weight', 0.0, 1.0, 0.01).listen().onChange(function (weight: any) {
+      setWeight(walkAction, weight);
+    });
+    blendWeightsFolder.add(settings, 'modify run weight', 0.0, 1.0, 0.01).listen().onChange(function (weight: any) {
+      setWeight(runAction, weight);
+    });
+
+    speedFolder.add(settings, 'modify time scale', 0.0, 1.5, 0.01).onChange(modifyTimeScale);
+
+    musicFolder.add(settings, 'play music').onChange(playMusic);
+    musicFolder.add(settings, 'modify music volume', 0.0, 1.0, 0.01).onChange(modifyVolume);
+
+    visibilityFolder.open();
+    activationFolder.open();
+    pausingFolder.open();
+    crossfadingFolder.open();
+    blendWeightsFolder.open();
+    speedFolder.open();
+    musicFolder.open();
 
     const lightsFolder = gui.addFolder('Lights')
     lightsFolder.add(pointLight, 'visible').name('point light')
@@ -246,15 +340,169 @@ function init() {
   }
 }
 
+function showModel(visibility: boolean) {
+  model.visible = visibility;
+}
+
+function showSkeleton(visibility: boolean) {
+  skeleton.visible = visibility;
+}
+
+function modifyTimeScale(speed: number) {
+  mixer.timeScale = speed;
+}
+
+function deactivateAllActions() {
+  actions.forEach(function (action) {
+    action.stop();
+  });
+}
+
+function activateAllActions() {
+  setWeight(idleAction, settings['modify idle weight']);
+  setWeight(walkAction, settings['modify walk weight']);
+  setWeight(runAction, settings['modify run weight']);
+  actions.forEach(function (action) {
+    action.play();
+  });
+}
+
+function pauseContinue() {
+  if (singleStepMode) {
+    singleStepMode = false;
+    unPauseAllActions();
+  } else {
+    if (idleAction.paused) {
+      unPauseAllActions();
+    } else {
+      pauseAllActions();
+    }
+  }
+}
+
+function pauseAllActions() {
+  actions.forEach(function (action) {
+    action.paused = true;
+  });
+}
+
+function unPauseAllActions() {
+  actions.forEach(function (action) {
+    action.paused = false;
+  });
+}
+
+function toSingleStepMode() {
+  unPauseAllActions();
+  singleStepMode = true;
+  sizeOfNextStep = settings['modify step size'];
+}
+
+function prepareCrossFade(startAction: any, endAction: any, defaultDuration: any) {
+  const duration = setCrossFadeDuration(defaultDuration);
+
+  singleStepMode = false;
+  unPauseAllActions();
+
+  if (startAction === idleAction) {
+    executeCrossFade(startAction, endAction, duration);
+  } else {
+    synchronizeCrossFade(startAction, endAction, duration);
+  }
+}
+
+function setCrossFadeDuration(defaultDuration: any) {
+  if (settings['use default duration']) {
+    return defaultDuration;
+  } else {
+    return settings['set custom duration'];
+  }
+}
+
+function synchronizeCrossFade(startAction: any, endAction: any, duration: any) {
+  mixer.addEventListener('loop', onLoopFinished);
+  function onLoopFinished(event: any) {
+    if (event.action === startAction) {
+      mixer.removeEventListener('loop', onLoopFinished);
+      executeCrossFade(startAction, endAction, duration);
+    }
+  }
+}
+
+function executeCrossFade(startAction: any, endAction: any, duration: any) {
+  setWeight(endAction, 1);
+  endAction.time = 0;
+  startAction.crossFadeTo(endAction, duration, true);
+}
+
+function setWeight(action: any, weight: any) {
+  action.enabled = true;
+  action.setEffectiveTimeScale(1);
+  action.setEffectiveWeight(weight);
+}
+
+function playMusic(play: boolean) {
+  if (play) {
+    music.play();
+  } else {
+    music.pause();
+  }
+}
+
+function modifyVolume(volume: number) {
+  music.volume = volume;
+}
+
+function updateWeightSliders() {
+  settings['modify idle weight'] = idleWeight;
+  settings['modify walk weight'] = walkWeight;
+  settings['modify run weight'] = runWeight;
+}
+
+function updateCrossFadeControls() {
+  if (idleWeight === 1 && walkWeight === 0 && runWeight === 0) {
+    crossFadeControls[0].disable();
+    crossFadeControls[1].enable();
+    crossFadeControls[2].disable();
+    crossFadeControls[3].disable();
+  }
+
+  if (idleWeight === 0 && walkWeight === 1 && runWeight === 0) {
+    crossFadeControls[0].enable();
+    crossFadeControls[1].disable();
+    crossFadeControls[2].enable();
+    crossFadeControls[3].disable();
+  }
+
+  if (idleWeight === 0 && walkWeight === 0 && runWeight === 1) {
+    crossFadeControls[0].disable();
+    crossFadeControls[1].disable();
+    crossFadeControls[2].disable();
+    crossFadeControls[3].enable();
+  }
+}
+
 function animate() {
   requestAnimationFrame(animate)
 
-  stats.update()
+  idleWeight = idleAction.getEffectiveWeight();
+  walkWeight = walkAction.getEffectiveWeight();
+  runWeight = runAction.getEffectiveWeight();
 
-  if (animation.enabled && animation.play) {
-    animations.rotate(cube, clock, Math.PI / 3)
-    animations.bounce(cube, clock, 1, 0.5, 0.5)
+  updateWeightSliders();
+
+  updateCrossFadeControls();
+
+  let mixerUpdateDelta = clock.getDelta();
+
+  if (singleStepMode) {
+    mixerUpdateDelta = sizeOfNextStep;
+    sizeOfNextStep = 0;
   }
+
+  mixer.update(mixerUpdateDelta);
+
+  stats.update()
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement
