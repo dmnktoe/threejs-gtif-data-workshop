@@ -1,4 +1,4 @@
-![GitHub License](https://img.shields.io/github/license/dmnktoe/threejs-gltf-tiktok-workshop) ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/:user/:repo/total)
+![GitHub License](https://img.shields.io/github/license/dmnktoe/threejs-gltf-tiktok-workshop) ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/dmnktoe/threejs-gltf-tiktok-workshop/total)
 
 ████████       ██   ██ ████████       ██   ██<br/>
 ██    ▄ ██ ▄██  ██     ██    ▄ ██ ▄██  ██
@@ -16,7 +16,7 @@ In Sector C, let your imagination run wild as you seek out a song that perfectly
 Connect the dots in Sector D, where we'll transcend local environments into the web with three.js. Ensure you have Node.js installed on your device by visiting https://nodejs.org/en/download. Follow the step-by-step instructions at https://github.com/dmnktoe/threejs-gltf-tiktok-workshop to download the repository and seamlessly shift your creation into the digital realm.
 
 | Time            | Program                                  |
-| --------------- | ---------------------------------------- |
+|-----------------|------------------------------------------|
 | 10.15h          | Hello & check-in                         |
 | 10.30h          | Coffein & workshop introduction          |
 | 10.45h - 16.00h | *create*, *choreo*, *concept*, *connect* |
@@ -88,7 +88,7 @@ What did you learn while building this project? What challenges did you face and
 - [Video analysis and pose creation](http://mixamo.com/)
 
 ### Downloads
-- [Download and install NodeJS](https://nodejs.org/en/download)
+- [Download and install Node.js](https://nodejs.org/en/download)
 - [Blender 3D](https://www.blender.org/download/)
 
 ## License
