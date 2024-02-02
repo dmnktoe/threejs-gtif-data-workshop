@@ -1,4 +1,6 @@
-![GitHub License](https://img.shields.io/github/license/dmnktoe/threejs-gltf-tiktok-workshop) ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/dmnktoe/threejs-gltf-tiktok-workshop/total)
+![GitHub License](https://img.shields.io/github/license/dmnktoe/threejs-gltf-tiktok-workshop?labelColor=%23000000&color=%2360D0BF) 
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/dmnktoe/threejs-gltf-tiktok-workshop/total?style=flat&logoColor=%23ffffff&label=Workshop%20Downloads&labelColor=%23000000&color=%234D0BD8&link=https%3A%2F%2Fgithub.com%2Fdmnktoe%2Fthreejs-gltf-tiktok-workshop%2Freleases)
+
 
 ████████       ██   ██ ████████       ██   ██<br/>
 ██    ▄ ██ ▄██  ██     ██    ▄ ██ ▄██  ██
