@@ -1,4 +1,4 @@
-import GUI, { Controller } from 'lil-gui'
+import GUI, { Controller } from 'lil-gui';
 import {
   AmbientLight,
   AnimationAction,
@@ -22,38 +22,40 @@ import {
   Scene,
   SkeletonHelper,
   WebGLRenderer,
-} from 'three'
-import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
-import Stats from 'three/examples/jsm/libs/stats.module'
-import {toggleFullScreen} from './helpers/fullscreen'
-import {resizeRendererToDisplaySize} from './helpers/responsiveness'
-import './style.css'
+} from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import Stats from 'three/examples/jsm/libs/stats.module';
+import { toggleFullScreen } from './helpers/fullscreen';
+import { resizeRendererToDisplaySize } from './helpers/responsiveness';
+import './style.css';
 
-const CANVAS_ID = 'scene'
+const CANVAS_ID = 'scene';
 
-let canvas: HTMLElement
-let renderer: WebGLRenderer
-let model: Group
-let skeleton: SkeletonHelper
-let mixer: AnimationMixer
+let canvas: HTMLElement;
+let renderer: WebGLRenderer;
+let model: Group;
+let skeleton: SkeletonHelper;
+let mixer: AnimationMixer;
 let clock: Clock;
-let scene: Scene
-let loadingManager: LoadingManager
-let ambientLight: AmbientLight
-let hemisphereLight: HemisphereLight
-let pointLight: PointLight
-let directionalLight: DirectionalLight
-let camera: PerspectiveCamera
-let cameraControls: OrbitControls
-let axesHelper: AxesHelper
-let pointLightHelper: PointLightHelper
-let stats: Stats
-let gui: GUI
+let scene: Scene;
+let loadingManager: LoadingManager;
+let ambientLight: AmbientLight;
+let hemisphereLight: HemisphereLight;
+let pointLight: PointLight;
+let directionalLight: DirectionalLight;
+let camera: PerspectiveCamera;
+let cameraControls: OrbitControls;
+let axesHelper: AxesHelper;
+let pointLightHelper: PointLightHelper;
+let stats: Stats;
+let gui: GUI;
 
 const crossFadeControls: Controller[] = [];
 
-let idleAction: AnimationAction, walkAction: AnimationAction, runAction: AnimationAction;
+let idleAction: AnimationAction,
+  walkAction: AnimationAction,
+  runAction: AnimationAction;
 let idleWeight: number, walkWeight: number, runWeight: number;
 let actions: AnimationAction[];
 let settings: any;
@@ -64,74 +66,76 @@ let sizeOfNextStep = 0;
 const music = new Audio('sounds/fingers-up.mp3');
 music.loop = true;
 
-init()
+init();
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
-    canvas = document.querySelector(`canvas#${CANVAS_ID}`)!
-    renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = PCFSoftShadowMap
-    scene = new Scene()
+    canvas = document.querySelector(`canvas#${CANVAS_ID}`)!;
+    renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = PCFSoftShadowMap;
+    scene = new Scene();
 
-    scene.background = new Color(0xa0a0a0)
+    scene.background = new Color(0xa0a0a0);
     scene.fog = new Fog(0xa0a0a0, 10, 50);
   }
 
   // ===== 👨🏻‍💼 LOADING MANAGER =====
   {
-    loadingManager = new LoadingManager()
+    loadingManager = new LoadingManager();
 
     loadingManager.onStart = () => {
-      console.log('loading started')
-    }
+      console.log('loading started');
+    };
     loadingManager.onProgress = (url, loaded, total) => {
-      console.log('loading in progress:')
-      console.log(`${url} -> ${loaded} / ${total}`)
-    }
+      console.log('loading in progress:');
+      console.log(`${url} -> ${loaded} / ${total}`);
+    };
     loadingManager.onLoad = () => {
-      console.log('loaded!')
-    }
+      console.log('loaded!');
+    };
     loadingManager.onError = () => {
-      console.log('❌ error while loading')
-    }
+      console.log('❌ error while loading');
+    };
   }
 
   // ===== 💡 LIGHTS =====
   {
-    ambientLight = new AmbientLight('white', 0.4)
-    directionalLight = new DirectionalLight(0xffffff, 3)
-    directionalLight.position.set( - 3, 10, - 10 );
+    ambientLight = new AmbientLight('white', 0.4);
+    directionalLight = new DirectionalLight(0xffffff, 3);
+    directionalLight.position.set(-3, 10, -10);
     directionalLight.castShadow = true;
     directionalLight.shadow.camera.top = 2;
-    directionalLight.shadow.camera.bottom = - 2;
-    directionalLight.shadow.camera.left = - 2;
+    directionalLight.shadow.camera.bottom = -2;
+    directionalLight.shadow.camera.left = -2;
     directionalLight.shadow.camera.right = 2;
     directionalLight.shadow.camera.near = 0.1;
     directionalLight.shadow.camera.far = 40;
-    hemisphereLight = new HemisphereLight(0xffffff, 0x8d8d8d, 3)
-    hemisphereLight.position.set( 0, 20, 0 )
-    pointLight = new PointLight('#ffdca8', 1.2, 100)
-    pointLight.position.set(-2, 3, 3)
-    pointLight.castShadow = true
-    pointLight.shadow.radius = 4
-    pointLight.shadow.camera.near = 0.5
-    pointLight.shadow.camera.far = 4000
-    pointLight.shadow.mapSize.width = 2048
-    pointLight.shadow.mapSize.height = 2048
-    scene.add(ambientLight)
-    scene.add(directionalLight)
-    scene.add(hemisphereLight)
-    scene.add(pointLight)
+    hemisphereLight = new HemisphereLight(0xffffff, 0x8d8d8d, 3);
+    hemisphereLight.position.set(0, 20, 0);
+    pointLight = new PointLight('#ffdca8', 1.2, 100);
+    pointLight.position.set(-2, 3, 3);
+    pointLight.castShadow = true;
+    pointLight.shadow.radius = 4;
+    pointLight.shadow.camera.near = 0.5;
+    pointLight.shadow.camera.far = 4000;
+    pointLight.shadow.mapSize.width = 2048;
+    pointLight.shadow.mapSize.height = 2048;
+    scene.add(ambientLight);
+    scene.add(directionalLight);
+    scene.add(hemisphereLight);
+    scene.add(pointLight);
   }
 
   // ===== 📦 OBJECTS =====
   {
-    const mesh = new Mesh(new PlaneGeometry(100, 100),
-      new MeshPhongMaterial({ color: 0xcbcbcb, depthWrite: false }));
-    mesh.rotation.x = - Math.PI / 2;
+    const mesh = new Mesh(
+      new PlaneGeometry(100, 100),
+      new MeshPhongMaterial({ color: 0xcbcbcb, depthWrite: false }),
+    );
+    mesh.rotation.x = -Math.PI / 2;
     mesh.receiveShadow = true;
 
     scene.add(mesh);
@@ -140,19 +144,21 @@ function init() {
   // ===== 🎳 LOAD GLTF MODEL =====
 
   {
-    const loader = new GLTFLoader(loadingManager)
+    const loader = new GLTFLoader(loadingManager);
     loader.load(
       'models/blob.glb',
       (gltf) => {
-        model = gltf.scene
-        scene.add(model)
+        model = gltf.scene;
+        scene.add(model);
 
-        model.traverse((child: { castShadow: boolean; receiveShadow: boolean; }) => {
-          if (child instanceof Mesh) {
-            child.castShadow = true
-            child.receiveShadow = true
-          }
-        })
+        model.traverse(
+          (child: { castShadow: boolean; receiveShadow: boolean }) => {
+            if (child instanceof Mesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
+          },
+        );
 
         skeleton = new SkeletonHelper(model);
         skeleton.visible = false;
@@ -163,98 +169,89 @@ function init() {
         mixer = new AnimationMixer(model);
 
         walkAction = mixer.clipAction(animations[0]);
-        
-
-     
-
-       
       },
       (xhr) => {
-        console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`)
+        console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`);
       },
       (error) => {
-        console.log('❌ error while loading gltf model')
-        console.error(error)
-      }
-    )
-    const loader2 = new GLTFLoader(loadingManager)
-    loader2.load(
-      'models/Soldier.glb',
-      (gltf) => {
-       
-
-        const animations2 = gltf.animations;
-      
-
-        idleAction = mixer.clipAction(animations2[0]);
-        runAction = mixer.clipAction(animations2[1]);
-
-        actions = [idleAction, walkAction, runAction];
-
-        activateAllActions();
-        animate();
+        console.log('❌ error while loading gltf model');
+        console.error(error);
       },
-      
-    )
-  }
+    );
+    const loader2 = new GLTFLoader(loadingManager);
+    loader2.load('models/Soldier.glb', (gltf) => {
+      const animations2 = gltf.animations;
 
-  
+      idleAction = mixer.clipAction(animations2[0]);
+      runAction = mixer.clipAction(animations2[1]);
+
+      actions = [idleAction, walkAction, runAction];
+
+      activateAllActions();
+      animate();
+    });
+  }
 
   // ===== 🎥 CAMERA =====
   {
-    camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 100);
-    camera.position.set( 2, 3, - 5 );
-    camera.lookAt( 0, 1, 0 );
+    camera = new PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      1,
+      100,
+    );
+    camera.position.set(2, 3, -5);
+    camera.lookAt(0, 1, 0);
   }
 
   // ===== 🕹️ CONTROLS =====
   {
-    cameraControls = new OrbitControls(camera, canvas)
-    cameraControls.enableDamping = true
-    cameraControls.autoRotate = false
-    cameraControls.update()
+    cameraControls = new OrbitControls(camera, canvas);
+    cameraControls.enableDamping = true;
+    cameraControls.autoRotate = false;
+    cameraControls.update();
 
     // Full screen
     window.addEventListener('dblclick', (event) => {
       if (event.target === canvas) {
-        toggleFullScreen(canvas)
+        toggleFullScreen(canvas);
       }
-    })
+    });
   }
 
   // ===== 🪄 HELPERS =====
   {
-    axesHelper = new AxesHelper(4)
-    axesHelper.visible = false
-    scene.add(axesHelper)
+    axesHelper = new AxesHelper(4);
+    axesHelper.visible = false;
+    scene.add(axesHelper);
 
-    pointLightHelper = new PointLightHelper(pointLight, undefined, 'orange')
-    pointLightHelper.visible = false
-    scene.add(pointLightHelper)
+    pointLightHelper = new PointLightHelper(pointLight, undefined, 'orange');
+    pointLightHelper.visible = false;
+    scene.add(pointLightHelper);
 
-    const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
-    gridHelper.position.y = -0.01
-    scene.add(gridHelper)
+    const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
+    gridHelper.position.y = -0.01;
+    scene.add(gridHelper);
   }
 
   // ===== 📈 STATS & CLOCK =====
   {
-    clock = new Clock()
-    stats = new Stats()
-    document.body.appendChild(stats.dom)
+    clock = new Clock();
+    stats = new Stats();
+    document.body.appendChild(stats.dom);
   }
 
   // ==== 🐞 DEBUG GUI ====
   {
-    gui = new GUI({ title: '💃 Dance-Options', width: 300 })
+    gui = new GUI({ title: '💃 Dance-Options', width: 300 });
 
     const visibilityFolder = gui.addFolder('Visibility');
-    const activationFolder = gui.addFolder( 'Activation/Deactivation' );
-    const pausingFolder = gui.addFolder( 'Pausing/Stepping' );
-    const crossfadingFolder = gui.addFolder( 'Crossfading' );
-    const blendWeightsFolder = gui.addFolder( 'Blend Weights' );
-    const speedFolder = gui.addFolder( 'General Speed' );
-    const musicFolder = gui.addFolder( 'Music' );
+    const activationFolder = gui.addFolder('Activation/Deactivation');
+    const pausingFolder = gui.addFolder('Pausing/Stepping');
+    const crossfadingFolder = gui.addFolder('Crossfading');
+    const blendWeightsFolder = gui.addFolder('Blend Weights');
+    const speedFolder = gui.addFolder('General Speed');
+    const musicFolder = gui.addFolder('Music');
 
     settings = {
       'show model': true,
@@ -274,7 +271,7 @@ function init() {
         prepareCrossFade(walkAction, runAction, 2.5);
       },
       'from run to walk': function () {
-        prepareCrossFade( runAction, walkAction, 5.0 );
+        prepareCrossFade(runAction, walkAction, 5.0);
       },
       'use default duration': true,
       'set custom duration': 3.5,
@@ -283,7 +280,7 @@ function init() {
       'modify run weight': 0.0,
       'modify time scale': 1.0,
       'play music': false,
-      'modify music volume': 0.5
+      'modify music volume': 0.5,
     };
 
     visibilityFolder.add(settings, 'show model').onChange(showModel);
@@ -296,28 +293,45 @@ function init() {
     pausingFolder.add(settings, 'make single step');
     pausingFolder.add(settings, 'modify step size', 0.01, 1, 0.01);
 
-    crossFadeControls.push(crossfadingFolder.add(settings, 'from walk to idle'));
-    crossFadeControls.push(crossfadingFolder.add(settings, 'from idle to walk'));
+    crossFadeControls.push(
+      crossfadingFolder.add(settings, 'from walk to idle'),
+    );
+    crossFadeControls.push(
+      crossfadingFolder.add(settings, 'from idle to walk'),
+    );
     crossFadeControls.push(crossfadingFolder.add(settings, 'from walk to run'));
     crossFadeControls.push(crossfadingFolder.add(settings, 'from run to walk'));
 
     crossfadingFolder.add(settings, 'use default duration');
     crossfadingFolder.add(settings, 'set custom duration', 0, 10, 0.01);
 
-    blendWeightsFolder.add(settings, 'modify idle weight', 0.0, 1.0, 0.01).listen().onChange(function (weight: any) {
-      setWeight(idleAction, weight);
-    });
-    blendWeightsFolder.add(settings, 'modify walk weight', 0.0, 1.0, 0.01).listen().onChange(function (weight: any) {
-      setWeight(walkAction, weight);
-    });
-    blendWeightsFolder.add(settings, 'modify run weight', 0.0, 1.0, 0.01).listen().onChange(function (weight: any) {
-      setWeight(runAction, weight);
-    });
+    blendWeightsFolder
+      .add(settings, 'modify idle weight', 0.0, 1.0, 0.01)
+      .listen()
+      .onChange(function (weight: any) {
+        setWeight(idleAction, weight);
+      });
+    blendWeightsFolder
+      .add(settings, 'modify walk weight', 0.0, 1.0, 0.01)
+      .listen()
+      .onChange(function (weight: any) {
+        setWeight(walkAction, weight);
+      });
+    blendWeightsFolder
+      .add(settings, 'modify run weight', 0.0, 1.0, 0.01)
+      .listen()
+      .onChange(function (weight: any) {
+        setWeight(runAction, weight);
+      });
 
-    speedFolder.add(settings, 'modify time scale', 0.1, 2, 0.01).onChange(modifyTimeScale);
+    speedFolder
+      .add(settings, 'modify time scale', 0.1, 2, 0.01)
+      .onChange(modifyTimeScale);
 
     musicFolder.add(settings, 'play music').onChange(playMusic);
-    musicFolder.add(settings, 'modify music volume', 0.0, 1.0, 0.01).onChange(modifyVolume);
+    musicFolder
+      .add(settings, 'modify music volume', 0.0, 1.0, 0.01)
+      .onChange(modifyVolume);
 
     visibilityFolder.open();
     activationFolder.open();
@@ -327,35 +341,35 @@ function init() {
     speedFolder.open();
     musicFolder.open();
 
-    const lightsFolder = gui.addFolder('Lights')
-    lightsFolder.add(pointLight, 'visible').name('point light')
-    lightsFolder.add(ambientLight, 'visible').name('ambient light')
+    const lightsFolder = gui.addFolder('Lights');
+    lightsFolder.add(pointLight, 'visible').name('point light');
+    lightsFolder.add(ambientLight, 'visible').name('ambient light');
 
-    const helpersFolder = gui.addFolder('Helpers')
-    helpersFolder.add(axesHelper, 'visible').name('axes')
-    helpersFolder.add(pointLightHelper, 'visible').name('pointLight')
+    const helpersFolder = gui.addFolder('Helpers');
+    helpersFolder.add(axesHelper, 'visible').name('axes');
+    helpersFolder.add(pointLightHelper, 'visible').name('pointLight');
 
-    const cameraFolder = gui.addFolder('Camera')
-    cameraFolder.add(cameraControls, 'autoRotate')
+    const cameraFolder = gui.addFolder('Camera');
+    cameraFolder.add(cameraControls, 'autoRotate');
 
     // persist GUI state in local storage on changes
     gui.onFinishChange(() => {
-      const guiState = gui.save()
-      localStorage.setItem('guiState', JSON.stringify(guiState))
-    })
+      const guiState = gui.save();
+      localStorage.setItem('guiState', JSON.stringify(guiState));
+    });
 
     // load GUI state if available in local storage
-    const guiState = localStorage.getItem('guiState')
-    if (guiState) gui.load(JSON.parse(guiState))
+    const guiState = localStorage.getItem('guiState');
+    if (guiState) gui.load(JSON.parse(guiState));
 
     // reset GUI state button
     const resetGui = () => {
-      localStorage.removeItem('guiState')
-      gui.reset()
-    }
-    gui.add({ resetGui }, 'resetGui').name('RESET')
+      localStorage.removeItem('guiState');
+      gui.reset();
+    };
+    gui.add({ resetGui }, 'resetGui').name('RESET');
 
-    gui.close()
+    gui.close();
   }
 }
 
@@ -417,7 +431,11 @@ function toSingleStepMode() {
   sizeOfNextStep = settings['modify step size'];
 }
 
-function prepareCrossFade(startAction: any, endAction: any, defaultDuration: any) {
+function prepareCrossFade(
+  startAction: any,
+  endAction: any,
+  defaultDuration: any,
+) {
   const duration = setCrossFadeDuration(defaultDuration);
 
   singleStepMode = false;
@@ -502,7 +520,7 @@ function updateCrossFadeControls() {
 }
 
 function animate() {
-  requestAnimationFrame(animate)
+  requestAnimationFrame(animate);
 
   idleWeight = idleAction.getEffectiveWeight();
   walkWeight = walkAction.getEffectiveWeight();
@@ -521,15 +539,15 @@ function animate() {
 
   mixer.update(mixerUpdateDelta);
 
-  stats.update()
+  stats.update();
 
   if (resizeRendererToDisplaySize(renderer)) {
-    const canvas = renderer.domElement
-    camera.aspect = canvas.clientWidth / canvas.clientHeight
-    camera.updateProjectionMatrix()
+    const canvas = renderer.domElement;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
   }
 
-  cameraControls.update()
+  cameraControls.update();
 
-  renderer.render(scene, camera)
+  renderer.render(scene, camera);
 }
