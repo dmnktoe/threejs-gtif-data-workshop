@@ -68,7 +68,7 @@ jobs:
   build:
     name: 🏗 Build
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, prettier, test]
+    needs: [lint, typecheck, prettier]
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
