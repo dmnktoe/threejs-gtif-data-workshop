@@ -68,7 +68,113 @@ music.loop = true;
 
 init();
 
+type Dance = {
+  creator: string;
+  name: string;
+  sound: string;
+  modelPosition: { x: number; y: number; z: number };
+};
+
 function init() {
+  const dances: Dance[] = [
+    {
+      creator: 'Alessandra',
+      name: 'Salsa Moves',
+      sound: 'sounds/SalsaMoves.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'bigP',
+      name: 'Schnuffeltanz',
+      sound: 'sounds/Schnuffeltanz.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Feli',
+      name: 'MACARAVE',
+      sound: 'sounds/MACARAVE.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Habeen',
+      name: 'Penguin',
+      sound: 'sounds/Penguin.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Helene',
+      name: 'Happytobehere',
+      sound: 'sounds/happytobehere.mp3',
+      modelPosition: { x: 1, y: 2, z: 0 },
+    },
+    {
+      creator: 'Johanna',
+      name: 'Stardance',
+      sound: 'sounds/Stardance.mp3',
+      modelPosition: { x: 2, y: 1, z: 0 },
+    },
+    {
+      creator: 'Kenyatta',
+      name: 'Untitled',
+      sound: 'sounds/MilesMoralesDrums.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Kevin',
+      name: 'Dance Instructor',
+      sound: 'sounds/DanceInstructor.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Ksen',
+      name: 'Chicken Gimme More',
+      sound: 'sounds/ChickenGimmeMore.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Linus',
+      name: 'Der mit dem Wolf Tanz',
+      sound: 'sounds/DerMitDemWolfTanz.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Luisa',
+      name: 'Sound Wiggle',
+      sound: 'sounds/SoundWiggle.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Maxi',
+      name: 'Melbourne Shuffle',
+      sound: 'sounds/MelbourneShuffle.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Meret',
+      name: 'Shake N Turn',
+      sound: 'sounds/ShakeNTurn.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Mink Yung',
+      name: 'Wackelig Schütteln',
+      sound: 'sounds/WackeligSchuetteln.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Nina',
+      name: 'Sonnentanz',
+      sound: 'sounds/Sonnentanz.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+    {
+      creator: 'Sophia',
+      name: 'Zucken',
+      sound: 'sounds/Zucken.mp3',
+      modelPosition: { x: 0, y: 0, z: 0 },
+    },
+  ];
+
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
     canvas = document.querySelector(`canvas#${CANVAS_ID}`)!;
@@ -244,6 +350,18 @@ function init() {
   // ==== 🐞 DEBUG GUI ====
   {
     gui = new GUI({ title: '💃 Dance-Options', width: 300 });
+
+    const danceFolder = gui.addFolder('Dances');
+    const danceNames = dances.map((dance) => dance.name);
+    const danceSelect = danceFolder.add(
+      { dance: danceNames[0] },
+      'dance',
+      danceNames,
+    );
+
+    danceSelect.onChange((selectedDance: string) => {
+      console.log('selected dance:', selectedDance);
+    });
 
     const visibilityFolder = gui.addFolder('Visibility');
     const activationFolder = gui.addFolder('Activation/Deactivation');
