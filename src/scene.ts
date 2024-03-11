@@ -11,11 +11,9 @@ import {
   Group,
   HemisphereLight,
   LoadingManager,
-  Mesh,
-  MeshPhongMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
-  PlaneGeometry,
+  PointLight,
   Scene,
   SkeletonHelper,
   WebGLRenderer,
@@ -39,6 +37,7 @@ let scene: Scene;
 let loadingManager: LoadingManager;
 let ambientLight: AmbientLight;
 let hemisphereLight: HemisphereLight;
+let pointlight: PointLight
 let camera: PerspectiveCamera;
 let cameraControls: OrbitControls;
 let axesHelper: AxesHelper;
@@ -46,7 +45,7 @@ let stats: Stats;
 let gui: GUI;
 
 
-let walkAction: AnimationAction;
+let danceAction: AnimationAction;
 let settings: any;
 
 let singleStepMode = false;
@@ -192,8 +191,8 @@ function init() {
     renderer.shadowMap.type = PCFSoftShadowMap;
     scene = new Scene();
 
-    scene.background = new Color(0xa0a0a0);
-    scene.fog = new Fog(0xa0a0a0, 10, 50);
+    scene.background = new Color(0x000000);
+    scene.fog = new Fog(0xffffff, 10, 50);
   }
 
 
@@ -201,22 +200,26 @@ function init() {
   // ===== 💡 LIGHTS =====
   {
     ambientLight = new AmbientLight('white', 0.4);
-    hemisphereLight = new HemisphereLight(0xffffff, 0x8d8d8d, 3);
-    hemisphereLight.position.set(0, 20, 0);
+    hemisphereLight = new HemisphereLight(0xffffff, 0x8d8d8d, 1);
+    hemisphereLight.position.set(0, 20, 15);
+    pointlight = new PointLight('green', 55);
+    pointlight.position.set(0,2,2);
+
     scene.add(ambientLight);
     scene.add(hemisphereLight);
+    scene.add(pointlight);
   }
 
-  // ===== 📦 OBJECTS =====
+  // ===== 📦 BASISKLASSE =====
   {
-    const mesh = new Mesh(
-      new PlaneGeometry(100, 100),
-      new MeshPhongMaterial({ color: 0xcbcbcb, depthWrite: false }),
-    );
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.receiveShadow = true;
-
-    scene.add(mesh);
+    const loader = new GLTFLoader(loadingManager);
+    loader.load(
+      'models/basis-room.glb',
+      (gltf) => {
+        model = gltf.scene;
+        model.position.set(0,2.3,0)
+        scene.add(model);
+      },)
   }
 
   // ===== 🎳 LOAD GLTF MODEL =====
@@ -228,6 +231,8 @@ function init() {
       (gltf) => {
         model = gltf.scene;
         model.scale.set(0.2,0.2,0.2)
+        model.position.set(0,0,0)
+        model.rotation.set(0,0,0)
         scene.add(model);
 
         skeleton = new SkeletonHelper(model);
@@ -238,7 +243,8 @@ function init() {
         console.log(animations);
         mixer = new AnimationMixer(model);
 
-        walkAction = mixer.clipAction(animations[0]).play();
+        danceAction = mixer.clipAction(animations[0]);
+        danceAction.play()
         animate();
       },
       (xhr) => {
@@ -260,8 +266,8 @@ function init() {
       1,
       100,
     );
-    camera.position.set(2, 3, -5);
-    camera.lookAt(0, 1, 0);
+    camera.position.set(2, 4, -8);
+    camera.lookAt(0, 2, 0);
   }
 
   // ===== 🕹️ CONTROLS =====
@@ -288,6 +294,7 @@ function init() {
 
     const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
     gridHelper.position.y = -0.01;
+    gridHelper.visible = true;
     scene.add(gridHelper);
   }
 
