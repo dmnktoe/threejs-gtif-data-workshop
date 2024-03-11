@@ -111,38 +111,37 @@ function init() {
   }
 
   // ===== 🎳 LOAD GLTF MODEL =====
-
   {
     const loader = new GLTFLoader(loadingManager);
-    loader.load(
-      'models/blob.glb',
-      (gltf) => {
-        model = gltf.scene;
-        model.scale.set(0.2, 0.2, 0.2);
-        model.position.set(0, 0, 0);
-        model.rotation.set(0, 0, 0);
-        scene.add(model);
+    dances.forEach((dance: Dance) => {
+      loader.load(
+        dance.modelFile,
+        (gltf) => {
+          model = gltf.scene;
+          model.position.set(
+            dance.modelPosition.x,
+            dance.modelPosition.y,
+            dance.modelPosition.z,
+          );
+          scene.add(model);
 
-        skeleton = new SkeletonHelper(model);
-        skeleton.visible = false;
-        scene.add(skeleton);
+          const animations = gltf.animations;
+          console.log(animations);
+          mixer = new AnimationMixer(model);
 
-        const animations = gltf.animations;
-        console.log(animations);
-        mixer = new AnimationMixer(model);
-
-        danceAction = mixer.clipAction(animations[0]);
-        danceAction.play();
-        animate();
-      },
-      (xhr) => {
-        console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`);
-      },
-      (error) => {
-        console.log('❌ error while loading gltf model');
-        console.error(error);
-      },
-    );
+          danceAction = mixer.clipAction(animations[0]);
+          danceAction.play();
+          animate();
+        },
+        (xhr) => {
+          console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`);
+        },
+        (error) => {
+          console.log('❌ error while loading gltf model');
+          console.error(error);
+        },
+      );
+    });
   }
 
   // ===== 🎥 CAMERA =====
