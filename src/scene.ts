@@ -37,13 +37,12 @@ let scene: Scene;
 let loadingManager: LoadingManager;
 let ambientLight: AmbientLight;
 let hemisphereLight: HemisphereLight;
-let pointlight: PointLight
+let pointlight: PointLight;
 let camera: PerspectiveCamera;
 let cameraControls: OrbitControls;
 let axesHelper: AxesHelper;
 let stats: Stats;
 let gui: GUI;
-
 
 let danceAction: AnimationAction;
 let settings: any;
@@ -163,24 +162,24 @@ function init() {
     },
   ];
 
-    // ===== 👨🏻‍💼 LOADING MANAGER =====
-    {
-      loadingManager = new LoadingManager();
-  
-      loadingManager.onStart = () => {
-        console.log('loading started');
-      };
-      loadingManager.onProgress = (url, loaded, total) => {
-        console.log('loading in progress:');
-        console.log(`${url} -> ${loaded} / ${total}`);
-      };
-      loadingManager.onLoad = () => {
-        console.log('loaded!');
-      };
-      loadingManager.onError = () => {
-        console.log('❌ error while loading');
-      };
-    }
+  // ===== 👨🏻‍💼 LOADING MANAGER =====
+  {
+    loadingManager = new LoadingManager();
+
+    loadingManager.onStart = () => {
+      console.log('loading started');
+    };
+    loadingManager.onProgress = (url, loaded, total) => {
+      console.log('loading in progress:');
+      console.log(`${url} -> ${loaded} / ${total}`);
+    };
+    loadingManager.onLoad = () => {
+      console.log('loaded!');
+    };
+    loadingManager.onError = () => {
+      console.log('❌ error while loading');
+    };
+  }
 
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
@@ -195,15 +194,13 @@ function init() {
     scene.fog = new Fog(0xffffff, 10, 50);
   }
 
-
-
   // ===== 💡 LIGHTS =====
   {
     ambientLight = new AmbientLight('white', 0.4);
     hemisphereLight = new HemisphereLight(0xffffff, 0x8d8d8d, 1);
     hemisphereLight.position.set(0, 20, 15);
     pointlight = new PointLight('green', 55);
-    pointlight.position.set(0,2,2);
+    pointlight.position.set(0, 2, 2);
 
     scene.add(ambientLight);
     scene.add(hemisphereLight);
@@ -213,13 +210,11 @@ function init() {
   // ===== 📦 BASISKLASSE =====
   {
     const loader = new GLTFLoader(loadingManager);
-    loader.load(
-      'models/basis-room.glb',
-      (gltf) => {
-        model = gltf.scene;
-        model.position.set(0,2.3,0)
-        scene.add(model);
-      },)
+    loader.load('models/basis-room.glb', (gltf) => {
+      model = gltf.scene;
+      model.position.set(0, 2.3, 0);
+      scene.add(model);
+    });
   }
 
   // ===== 🎳 LOAD GLTF MODEL =====
@@ -230,9 +225,9 @@ function init() {
       'models/blob.glb',
       (gltf) => {
         model = gltf.scene;
-        model.scale.set(0.2,0.2,0.2)
-        model.position.set(0,0,0)
-        model.rotation.set(0,0,0)
+        model.scale.set(0.2, 0.2, 0.2);
+        model.position.set(0, 0, 0);
+        model.rotation.set(0, 0, 0);
         scene.add(model);
 
         skeleton = new SkeletonHelper(model);
@@ -244,7 +239,7 @@ function init() {
         mixer = new AnimationMixer(model);
 
         danceAction = mixer.clipAction(animations[0]);
-        danceAction.play()
+        danceAction.play();
         animate();
       },
       (xhr) => {
@@ -255,7 +250,6 @@ function init() {
         console.error(error);
       },
     );
-    
   }
 
   // ===== 🎥 CAMERA =====
@@ -290,7 +284,6 @@ function init() {
     axesHelper = new AxesHelper(4);
     axesHelper.visible = false;
     scene.add(axesHelper);
-
 
     const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
     gridHelper.position.y = -0.01;
@@ -337,10 +330,6 @@ function init() {
     visibilityFolder.add(settings, 'show model').onChange(showModel);
     visibilityFolder.add(settings, 'show skeleton').onChange(showSkeleton);
 
-
-
-   
-
     speedFolder
       .add(settings, 'modify time scale', 0.1, 2, 0.01)
       .onChange(modifyTimeScale);
@@ -354,10 +343,8 @@ function init() {
     speedFolder.open();
     musicFolder.open();
 
-
     const helpersFolder = gui.addFolder('Helpers');
     helpersFolder.add(axesHelper, 'visible').name('axes');
-   
 
     const cameraFolder = gui.addFolder('Camera');
     cameraFolder.add(cameraControls, 'autoRotate');
@@ -395,8 +382,6 @@ function modifyTimeScale(speed: number) {
   mixer.timeScale = speed;
 }
 
-
-
 function playMusic(play: boolean) {
   if (play) {
     music.play();
@@ -409,12 +394,8 @@ function modifyVolume(volume: number) {
   music.volume = volume;
 }
 
-
-
-
 function animate() {
   requestAnimationFrame(animate);
-
 
   let mixerUpdateDelta = clock.getDelta();
 
