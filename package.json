@@ -11,7 +11,6 @@
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "typecheck": "tsc --noEmit"
-
   },
   "devDependencies": {
     "@types/three": "^0.161.0",
@@ -29,6 +28,7 @@
   },
   "dependencies": {
     "lil-gui": "^0.19.1",
+    "lint": "^0.8.19",
     "three": "^0.161.0"
   }
 }

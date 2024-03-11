@@ -47,9 +47,6 @@ let gui: GUI;
 let danceAction: AnimationAction;
 let settings: any;
 
-let singleStepMode = false;
-let sizeOfNextStep = 0;
-
 const music = new Audio('sounds/fingers-up.mp3');
 music.loop = true;
 
@@ -397,12 +394,7 @@ function modifyVolume(volume: number) {
 function animate() {
   requestAnimationFrame(animate);
 
-  let mixerUpdateDelta = clock.getDelta();
-
-  if (singleStepMode) {
-    mixerUpdateDelta = sizeOfNextStep;
-    sizeOfNextStep = 0;
-  }
+  const mixerUpdateDelta = clock.getDelta();
 
   mixer.update(mixerUpdateDelta);
 
