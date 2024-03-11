@@ -55,8 +55,10 @@ init();
 type Dance = {
   creator: string;
   name: string;
-  sound: string;
+  soundFile: string;
+  modelFile: string;
   modelPosition: { x: number; y: number; z: number };
+  modelRotation?: { x: number; y: number; z: number };
 };
 
 function init() {
@@ -64,97 +66,113 @@ function init() {
     {
       creator: 'Alessandra',
       name: 'Salsa Moves',
-      sound: 'sounds/SalsaMoves.mp3',
+      soundFile: 'sounds/SalsaMoves.mp3',
+      modelFile: 'models/SalsaMoves.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'bigP',
       name: 'Schnuffeltanz',
-      sound: 'sounds/Schnuffeltanz.mp3',
+      soundFile: 'sounds/Schnuffeltanz.mp3',
+      modelFile: 'models/Schnuffeltanz.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Feli',
       name: 'MACARAVE',
-      sound: 'sounds/MACARAVE.mp3',
+      soundFile: 'sounds/MACARAVE.mp3',
+      modelFile: 'models/MACARAVE.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Habeen',
       name: 'Penguin',
-      sound: 'sounds/Penguin.mp3',
+      soundFile: 'sounds/Penguin.mp3',
+      modelFile: 'models/Penguin.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Helene',
       name: 'Happytobehere',
-      sound: 'sounds/happytobehere.mp3',
+      soundFile: 'sounds/happytobehere.mp3',
+      modelFile: 'models/happytobehere.glb',
       modelPosition: { x: 1, y: 2, z: 0 },
     },
     {
       creator: 'Johanna',
       name: 'Stardance',
-      sound: 'sounds/Stardance.mp3',
+      soundFile: 'sounds/Stardance.mp3',
+      modelFile: 'models/Stardance.glb',
       modelPosition: { x: 2, y: 1, z: 0 },
     },
     {
       creator: 'Kenyatta',
       name: 'Untitled',
-      sound: 'sounds/MilesMoralesDrums.mp3',
+      soundFile: 'sounds/MilesMoralesDrums.mp3',
+      modelFile: 'models/MilesMorales.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Kevin',
       name: 'Dance Instructor',
-      sound: 'sounds/DanceInstructor.mp3',
+      soundFile: 'sounds/DanceInstructor.mp3',
+      modelFile: 'models/DanceInstructor.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Ksen',
       name: 'Chicken Gimme More',
-      sound: 'sounds/ChickenGimmeMore.mp3',
+      soundFile: 'sounds/ChickenGimmeMore.mp3',
+      modelFile: 'models/Chicken.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Linus',
       name: 'Der mit dem Wolf Tanz',
-      sound: 'sounds/DerMitDemWolfTanz.mp3',
+      soundFile: 'sounds/DerMitDemWolfTanz.mp3',
+      modelFile: 'models/DerMitDemWolfTanz.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Luisa',
       name: 'Sound Wiggle',
-      sound: 'sounds/SoundWiggle.mp3',
+      soundFile: 'sounds/SoundWiggle.mp3',
+      modelFile: 'models/SoundWiggle.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Maxi',
       name: 'Melbourne Shuffle',
-      sound: 'sounds/MelbourneShuffle.mp3',
+      soundFile: 'sounds/MelbourneShuffle.mp3',
+      modelFile: 'models/MelbourneShuffle.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Meret',
       name: 'Shake N Turn',
-      sound: 'sounds/ShakeNTurn.mp3',
+      soundFile: 'sounds/ShakeNTurn.mp3',
+      modelFile: 'models/ShakeNTurn.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Mink Yung',
       name: 'Wackelig Schütteln',
-      sound: 'sounds/WackeligSchuetteln.mp3',
+      soundFile: 'sounds/WackeligSchuetteln.mp3',
+      modelFile: 'models/WackeligSchuetteln.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Nina',
       name: 'Sonnentanz',
-      sound: 'sounds/Sonnentanz.mp3',
+      soundFile: 'sounds/Sonnentanz.mp3',
+      modelFile: 'models/Sonnentanz.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
     {
       creator: 'Sophia',
       name: 'Zucken',
-      sound: 'sounds/Zucken.mp3',
+      soundFile: 'sounds/Zucken.mp3',
+      modelFile: 'models/Zucken.glb',
       modelPosition: { x: 0, y: 0, z: 0 },
     },
   ];
