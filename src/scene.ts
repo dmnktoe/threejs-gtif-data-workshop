@@ -15,7 +15,6 @@ import {
   PerspectiveCamera,
   PointLight,
   Scene,
-  SkeletonHelper,
   WebGLRenderer,
   Object3D,
 } from 'three';
@@ -33,10 +32,8 @@ const CANVAS_ID = 'scene';
 let canvas: HTMLElement;
 let renderer: WebGLRenderer;
 let model: Group;
-let skeleton: SkeletonHelper;
-let mixer: AnimationMixer;
-let mixers: AnimationMixer[] = [];
-let models: Object3D[] = [];
+const mixers: AnimationMixer[] = [];
+const models: Object3D[] = [];
 let clock: Clock;
 let scene: Scene;
 let loadingManager: LoadingManager;
@@ -116,200 +113,176 @@ function init() {
 
   // ===== 🎳 LOAD GLTF MODEL =====
   {
-
-   
     const loader = new GLTFLoader(loadingManager);
 
-  dances.forEach((dance, index) => {
-  loader.load(
-    dance.modelFile,
-    (gltf) => {
-      const model = gltf.scene;
-      model.position.set(dance.modelPosition.x, dance.modelPosition.y, dance.modelPosition.z);
-      scene.add(model);
+    dances.forEach((dance, index) => {
+      loader.load(
+        dance.modelFile,
+        (gltf) => {
+          const model = gltf.scene;
+          model.position.set(
+            dance.modelPosition.x,
+            dance.modelPosition.y,
+            dance.modelPosition.z,
+          );
+          scene.add(model);
 
-      // Model im Array speichern, um es eindeutig identifizierbar zu machen
-      models[index] = model;
+          // Model im Array speichern, um es eindeutig identifizierbar zu machen
+          models[index] = model;
 
-      const mixer = new AnimationMixer(model);
-      const danceAction = mixer.clipAction(gltf.animations[0]);
-      danceAction.play();
+          const mixer = new AnimationMixer(model);
+          danceAction = mixer.clipAction(gltf.animations[0]);
+          danceAction.play();
 
-      // Mixer im Array speichern, um ihn eindeutig identifizierbar zu machen
-      mixers[index] = mixer;
-    },
-    (xhr) => {
-      console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`);
-    },
-    (error) => {
-      console.log('❌ Error while loading GLTF model');
-      console.error(error);
-    },
-  );
-})
+          // Mixer im Array speichern, um ihn eindeutig identifizierbar zu machen
+          mixers[index] = mixer;
+        },
+        (xhr) => {
+          console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`);
+        },
+        (error) => {
+          console.log('❌ Error while loading GLTF model');
+          console.error(error);
+        },
+      );
+    });
 
-  // ===== 🎥 CAMERA =====
-  {
-    camera = new PerspectiveCamera(
-      45,
-      window.innerWidth / window.innerHeight,
-      1,
-      100,
-    );
-    camera.position.set(2, 4, -8);
-    camera.lookAt(0, 2, 0);
+    // ===== 🎥 CAMERA =====
+    {
+      camera = new PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        1,
+        100,
+      );
+      camera.position.set(2, 4, -8);
+      camera.lookAt(0, 2, 0);
+    }
+
+    // ===== 🕹️ CONTROLS =====
+    {
+      cameraControls = new OrbitControls(camera, canvas);
+      cameraControls.enableDamping = true;
+      cameraControls.autoRotate = false;
+      cameraControls.update();
+
+      // Full screen
+      window.addEventListener('dblclick', (event) => {
+        if (event.target === canvas) {
+          toggleFullScreen(canvas);
+        }
+      });
+    }
+
+    // ===== 🪄 HELPERS =====
+    {
+      axesHelper = new AxesHelper(4);
+      axesHelper.visible = false;
+      scene.add(axesHelper);
+
+      const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
+      gridHelper.position.y = -0.01;
+      gridHelper.visible = true;
+      scene.add(gridHelper);
+    }
+
+    // ===== 📈 STATS & CLOCK =====
+    {
+      clock = new Clock();
+      stats = new Stats();
+      document.body.appendChild(stats.dom);
+    }
+
+    // ==== 🐞 DEBUG GUI ====
+    {
+      gui = new GUI({ title: '💃 Dance-Options', width: 300 });
+
+      const danceFolder = gui.addFolder('Dances');
+      const danceNames = dances.map((dance: Dance) => dance.name);
+      const danceSelect = danceFolder.add(
+        { dance: danceNames[0] },
+        'dance',
+        danceNames,
+      );
+
+      danceSelect.onChange((selectedDance: string) => {
+        console.log('selected dance:', selectedDance);
+      });
+
+      const musicFolder = gui.addFolder('Music');
+
+      settings = {
+        'play music': false,
+        'modify music volume': 0.5,
+      };
+
+      musicFolder.add(settings, 'play music').onChange(playMusic);
+      musicFolder
+        .add(settings, 'modify music volume', 0.0, 1.0, 0.01)
+        .onChange(modifyVolume);
+
+      musicFolder.open();
+
+      const helpersFolder = gui.addFolder('Helpers');
+      helpersFolder.add(axesHelper, 'visible').name('axes');
+
+      const cameraFolder = gui.addFolder('Camera');
+      cameraFolder.add(cameraControls, 'autoRotate');
+
+      // persist GUI state in local storage on changes
+      gui.onFinishChange(() => {
+        const guiState = gui.save();
+        localStorage.setItem('guiState', JSON.stringify(guiState));
+      });
+
+      // load GUI state if available in local storage
+      const guiState = localStorage.getItem('guiState');
+      if (guiState) gui.load(JSON.parse(guiState));
+
+      // reset GUI state button
+      const resetGui = () => {
+        localStorage.removeItem('guiState');
+        gui.reset();
+      };
+      gui.add({ resetGui }, 'resetGui').name('RESET');
+
+      gui.close();
+    }
   }
 
-  // ===== 🕹️ CONTROLS =====
-  {
-    cameraControls = new OrbitControls(camera, canvas);
-    cameraControls.enableDamping = true;
-    cameraControls.autoRotate = false;
+  function playMusic(play: boolean) {
+    if (play) {
+      music.play();
+    } else {
+      music.pause();
+    }
+  }
+
+  function modifyVolume(volume: number) {
+    music.volume = volume;
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // Delta-Zeit seit dem letzten Frame berechnen
+    const delta = clock.getDelta();
+
+    // Aktualisiere alle Mixer mit der Zeit seit dem letzten Frame
+    mixers.forEach((mixer) => {
+      mixer.update(delta);
+    });
+
+    stats.update();
+
+    if (resizeRendererToDisplaySize(renderer)) {
+      const canvas = renderer.domElement;
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+    }
+
     cameraControls.update();
 
-    // Full screen
-    window.addEventListener('dblclick', (event) => {
-      if (event.target === canvas) {
-        toggleFullScreen(canvas);
-      }
-    });
-  }
-
-  // ===== 🪄 HELPERS =====
-  {
-    axesHelper = new AxesHelper(4);
-    axesHelper.visible = false;
-    scene.add(axesHelper);
-
-    const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
-    gridHelper.position.y = -0.01;
-    gridHelper.visible = true;
-    scene.add(gridHelper);
-  }
-
-  // ===== 📈 STATS & CLOCK =====
-  {
-    clock = new Clock();
-    stats = new Stats();
-    document.body.appendChild(stats.dom);
-  }
-
-  // ==== 🐞 DEBUG GUI ====
-  {
-    gui = new GUI({ title: '💃 Dance-Options', width: 300 });
-
-    const danceFolder = gui.addFolder('Dances');
-    const danceNames = dances.map((dance: Dance) => dance.name);
-    const danceSelect = danceFolder.add(
-      { dance: danceNames[0] },
-      'dance',
-      danceNames,
-    );
-
-    danceSelect.onChange((selectedDance: string) => {
-      console.log('selected dance:', selectedDance);
-    });
-
-    const visibilityFolder = gui.addFolder('Visibility');
-    const speedFolder = gui.addFolder('General Speed');
-    const musicFolder = gui.addFolder('Music');
-
-    settings = {
-      'show model': true,
-      'show skeleton': false,
-      'use default duration': true,
-      'modify time scale': 1.0,
-      'play music': false,
-      'modify music volume': 0.5,
-    };
-
-    visibilityFolder.add(settings, 'show model').onChange(showModel);
-    visibilityFolder.add(settings, 'show skeleton').onChange(showSkeleton);
-
-    speedFolder
-      .add(settings, 'modify time scale', 0.1, 2, 0.01)
-      .onChange(modifyTimeScale);
-
-    musicFolder.add(settings, 'play music').onChange(playMusic);
-    musicFolder
-      .add(settings, 'modify music volume', 0.0, 1.0, 0.01)
-      .onChange(modifyVolume);
-
-    visibilityFolder.open();
-    speedFolder.open();
-    musicFolder.open();
-
-    const helpersFolder = gui.addFolder('Helpers');
-    helpersFolder.add(axesHelper, 'visible').name('axes');
-
-    const cameraFolder = gui.addFolder('Camera');
-    cameraFolder.add(cameraControls, 'autoRotate');
-
-    // persist GUI state in local storage on changes
-    gui.onFinishChange(() => {
-      const guiState = gui.save();
-      localStorage.setItem('guiState', JSON.stringify(guiState));
-    });
-
-    // load GUI state if available in local storage
-    const guiState = localStorage.getItem('guiState');
-    if (guiState) gui.load(JSON.parse(guiState));
-
-    // reset GUI state button
-    const resetGui = () => {
-      localStorage.removeItem('guiState');
-      gui.reset();
-    };
-    gui.add({ resetGui }, 'resetGui').name('RESET');
-
-    gui.close();
+    renderer.render(scene, camera);
   }
 }
-
-function showModel(visibility: boolean) {
-  model.visible = visibility;
-}
-
-function showSkeleton(visibility: boolean) {
-  skeleton.visible = visibility;
-}
-
-function modifyTimeScale(speed: number) {
-  mixer.timeScale = speed;
-}
-
-function playMusic(play: boolean) {
-  if (play) {
-    music.play();
-  } else {
-    music.pause();
-  }
-}
-
-function modifyVolume(volume: number) {
-  music.volume = volume;
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-
-// Delta-Zeit seit dem letzten Frame berechnen
-const delta = clock.getDelta();
-
-// Aktualisiere alle Mixer mit der Zeit seit dem letzten Frame
-mixers.forEach((mixer) => {
-  mixer.update(delta);
-});
-
-  stats.update();
-
-  if (resizeRendererToDisplaySize(renderer)) {
-    const canvas = renderer.domElement;
-    camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    camera.updateProjectionMatrix();
-  }
-
-  cameraControls.update();
-
-  renderer.render(scene, camera);
-}}
