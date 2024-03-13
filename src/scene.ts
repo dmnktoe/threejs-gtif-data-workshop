@@ -137,9 +137,9 @@ function init() {
           // Set models scale from data
           if (dance.modelScale) {
             model.scale.set(
-              dance.modelScale.x,
-              dance.modelScale.y,
-              dance.modelScale.z,
+              dance.modelScale,
+              dance.modelScale,
+              dance.modelScale,
             );
           }
           // Add model to scene
