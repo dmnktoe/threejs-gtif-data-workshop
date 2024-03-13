@@ -32,6 +32,7 @@ export const dances: Dance[] = [
     soundFile: 'sounds/Penguin.mp3',
     modelFile: 'models/Penguin.glb',
     modelPosition: { x: 0, y: 0, z: 0 },
+    modelScale: 0.1,
   },
   {
     id: 5,
@@ -40,6 +41,7 @@ export const dances: Dance[] = [
     soundFile: 'sounds/happytobehere.mp3',
     modelFile: 'models/happytobehere.glb',
     modelPosition: { x: 1, y: 2, z: 0 },
+    modelScale: 0.1,
   },
   {
     id: 6,
@@ -88,6 +90,7 @@ export const dances: Dance[] = [
     soundFile: 'sounds/SoundWiggle.mp3',
     modelFile: 'models/SoundWiggle.glb',
     modelPosition: { x: 0, y: 0, z: 0 },
+    modelScale: 0.1,
   },
   {
     id: 12,
