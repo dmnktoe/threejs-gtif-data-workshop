@@ -17,6 +17,7 @@ import {
   Scene,
   SkeletonHelper,
   WebGLRenderer,
+  Object3D,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -34,6 +35,8 @@ let renderer: WebGLRenderer;
 let model: Group;
 let skeleton: SkeletonHelper;
 let mixer: AnimationMixer;
+let mixers: AnimationMixer[] = [];
+let models: Object3D[] = [];
 let clock: Clock;
 let scene: Scene;
 let loadingManager: LoadingManager;
@@ -107,42 +110,43 @@ function init() {
       model = gltf.scene;
       model.position.set(0, 2.3, 0);
       scene.add(model);
+      animate();
     });
   }
 
   // ===== 🎳 LOAD GLTF MODEL =====
   {
+
+   
     const loader = new GLTFLoader(loadingManager);
-    dances.forEach((dance: Dance) => {
-      loader.load(
-        dance.modelFile,
-        (gltf) => {
-          model = gltf.scene;
-          model.position.set(
-            dance.modelPosition.x,
-            dance.modelPosition.y,
-            dance.modelPosition.z,
-          );
-          scene.add(model);
 
-          const animations = gltf.animations;
-          console.log(animations);
-          mixer = new AnimationMixer(model);
+  dances.forEach((dance, index) => {
+  loader.load(
+    dance.modelFile,
+    (gltf) => {
+      const model = gltf.scene;
+      model.position.set(dance.modelPosition.x, dance.modelPosition.y, dance.modelPosition.z);
+      scene.add(model);
 
-          danceAction = mixer.clipAction(animations[0]);
-          danceAction.play();
-          animate();
-        },
-        (xhr) => {
-          console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`);
-        },
-        (error) => {
-          console.log('❌ error while loading gltf model');
-          console.error(error);
-        },
-      );
-    });
-  }
+      // Model im Array speichern, um es eindeutig identifizierbar zu machen
+      models[index] = model;
+
+      const mixer = new AnimationMixer(model);
+      const danceAction = mixer.clipAction(gltf.animations[0]);
+      danceAction.play();
+
+      // Mixer im Array speichern, um ihn eindeutig identifizierbar zu machen
+      mixers[index] = mixer;
+    },
+    (xhr) => {
+      console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`);
+    },
+    (error) => {
+      console.log('❌ Error while loading GLTF model');
+      console.error(error);
+    },
+  );
+})
 
   // ===== 🎥 CAMERA =====
   {
@@ -289,9 +293,13 @@ function modifyVolume(volume: number) {
 function animate() {
   requestAnimationFrame(animate);
 
-  const mixerUpdateDelta = clock.getDelta();
+// Delta-Zeit seit dem letzten Frame berechnen
+const delta = clock.getDelta();
 
-  mixer.update(mixerUpdateDelta);
+// Aktualisiere alle Mixer mit der Zeit seit dem letzten Frame
+mixers.forEach((mixer) => {
+  mixer.update(delta);
+});
 
   stats.update();
 
@@ -304,4 +312,4 @@ function animate() {
   cameraControls.update();
 
   renderer.render(scene, camera);
-}
+}}
