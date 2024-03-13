@@ -1,6 +1,6 @@
 export interface Dance {
   id: number;
-  creator: string;
+  creator?: string;
   name: string;
   soundFile: string;
   modelFile: string;
