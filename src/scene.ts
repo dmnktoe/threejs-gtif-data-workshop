@@ -118,15 +118,32 @@ function init() {
         dance.modelFile,
         (gltf) => {
           model = gltf.scene;
+          // Set models position from data
           model.position.set(
             dance.modelPosition.x,
             dance.modelPosition.y,
             dance.modelPosition.z,
           );
+          // Set models rotation from data if available
+          if (dance.modelRotation) {
+            model.rotation.set(
+              dance.modelRotation.x,
+              dance.modelRotation.y,
+              dance.modelRotation.z,
+            );
+          }
+          // Set models scale from data
+          if (dance.modelScale) {
+            model.scale.set(
+              dance.modelScale.x,
+              dance.modelScale.y,
+              dance.modelScale.z,
+            );
+          }
+          // Add model to scene
           scene.add(model);
 
           const animations = gltf.animations;
-          console.log(animations);
           mixer = new AnimationMixer(model);
 
           danceAction = mixer.clipAction(animations[0]);
