@@ -4,7 +4,7 @@ export interface Dance {
   name: string;
   soundFile: string;
   modelFile: string;
-  modelPosition?: { x: number; y: number; z: number };
+  modelPosition: { x: number; y: number; z: number };
   modelRotation?: { x: number; y: number; z: number };
   modelScale?: number;
 }
