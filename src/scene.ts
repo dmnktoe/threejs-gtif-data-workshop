@@ -120,11 +120,29 @@ function init() {
         dance.modelFile,
         (gltf) => {
           const model = gltf.scene;
+          // Set models position from data
           model.position.set(
             dance.modelPosition.x,
             dance.modelPosition.y,
             dance.modelPosition.z,
           );
+          // Set models rotation from data if available
+          if (dance.modelRotation) {
+            model.rotation.set(
+              dance.modelRotation.x,
+              dance.modelRotation.y,
+              dance.modelRotation.z,
+            );
+          }
+          // Set models scale from data
+          if (dance.modelScale) {
+            model.scale.set(
+              dance.modelScale,
+              dance.modelScale,
+              dance.modelScale,
+            );
+          }
+          // Add model to scene
           scene.add(model);
 
           // Model im Array speichern, um es eindeutig identifizierbar zu machen
