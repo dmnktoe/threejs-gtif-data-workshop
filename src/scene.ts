@@ -1,3 +1,5 @@
+import './style.css';
+
 import GUI from 'lil-gui';
 import {
   AmbientLight,
@@ -11,20 +13,20 @@ import {
   Group,
   HemisphereLight,
   LoadingManager,
+  Object3D,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PointLight,
   Scene,
   WebGLRenderer,
-  Object3D,
 } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import Stats from 'three/examples/jsm/libs/stats.module';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+
+import { dances } from './data/dances';
 import { toggleFullScreen } from './helpers/fullscreen';
 import { resizeRendererToDisplaySize } from './helpers/responsiveness';
-import './style.css';
-import { dances } from './data/dances';
 import { Dance } from './types/Dance';
 
 const CANVAS_ID = 'scene';
